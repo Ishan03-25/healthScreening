@@ -84,6 +84,7 @@ export default function ScreeningPage() {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
+      console.log("User is unauthenticated, redirecting to login");
       router.push("/auth/login?callbackUrl=/screening")
     }
   }, [status, router])
