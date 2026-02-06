@@ -46,7 +46,7 @@ export default function LoginPage() {
           // doctors and users go to screening
           router.push("/screening")
         }
-        router.refresh()
+        // router.refresh()
       }
     } catch {
       setError("Something went wrong. Please try again.")
