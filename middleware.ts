@@ -33,7 +33,13 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Get token (works in Edge Runtime) - must pass secret explicitly for production
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+  // secureCookie: true tells getToken to look for __Secure- prefixed cookie on HTTPS
+  const isSecure = process.env.NODE_ENV === "production"
+  const token = await getToken({ 
+    req: request, 
+    secret: process.env.NEXTAUTH_SECRET,
+    secureCookie: isSecure,
+  })
 
   // Redirect to login if not authenticated
   if (!token) {
