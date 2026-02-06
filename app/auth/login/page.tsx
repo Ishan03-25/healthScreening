@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { signIn, getSession } from "next-auth/react"
+import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -33,20 +33,22 @@ export default function LoginPage() {
         redirect: false,
       })
 
-      if (result?.error) {
+      if (result?.error || !result?.ok) {
         setError("Invalid email or password")
       } else {
-        // Fetch session to get user role and redirect accordingly
-        const session = await getSession()
-        const userRole = (session?.user as { role?: string })?.role
+        // Fetch session directly from API to ensure we get fresh data
+        const sessionRes = await fetch('/api/auth/session')
+        const session = await sessionRes.json()
+        const userRole = session?.user?.role
         
         if (userRole === "admin") {
           router.push("/admin")
+          router.refresh()
         } else {
           // doctors and users go to screening
           router.push("/screening")
+          router.refresh()
         }
-        // router.refresh()
       }
     } catch {
       setError("Something went wrong. Please try again.")
