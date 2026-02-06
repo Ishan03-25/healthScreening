@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USERS & AUTH ====================
+
+enum Role {
+  user
+  doctor
+  admin
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  role          Role      @default(user)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  patients      Patient[] // Patients created by this user
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ==================== PATIENT & SCREENING ====================
+
+enum ScreeningType {
+  OROSCAN
+  MEDTECH
+}
+
+model Patient {
+  id              String        @id @default(cuid())
+  screeningNumber String        @unique  // Auto-generated screening number
+  name            String
+  age             Int
+  gender          String
+  phone           String
+  healthAssistant String?
+  address         String
+  screeningType   ScreeningType // OROSCAN or MEDTECH
+  createdById     String
+  createdBy       User          @relation(fields: [createdById], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Oroscan specific
+  oroscanResponses  OroscanResponse[]
+  oroscanImages     OroscanImage[]
+  oroscanDiagnosis  OroscanDiagnosis[]
+  
+  // Medtech specific
+  medtechResponses  MedtechResponse[]
+  medtechImages     MedtechImage[]
+}
+
+// ==================== OROSCAN MODELS ====================
+
+model OroscanQuestion {
+  id        String            @id @default(cuid())
+  category  String            // medical, family, features
+  text      String
+  type      String            // text, boolean, choice, image-select
+  options   String?           // JSON array of options
+  responses OroscanResponse[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model OroscanResponse {
+  id         String          @id @default(cuid())
+  patientId  String
+  patient    Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  questionId String
+  question   OroscanQuestion @relation(fields: [questionId], references: [id])
+  answer     String
+  duration   String?         // For habits like alcohol, tobacco duration
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model OroscanImage {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  url       String   // Image URL or base64
+  type      String   // device-upload, asymmetry, patches, lumps, trismus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OroscanDiagnosis {
+  id         String   @id @default(cuid())
+  patientId  String
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  result     String   // AI/ML analysis result
+  confidence Float    // Confidence score
+  metadata   Json?    // Additional metadata
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ==================== MEDTECH (ANEMIA) MODELS ====================
+
+model MedtechQuestion {
+  id        String            @id @default(cuid())
+  category  String            // health, dietary, medical, lifestyle
+  text      String
+  type      String            // text, boolean, choice, number
+  options   String?           // JSON array of options
+  responses MedtechResponse[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model MedtechResponse {
+  id         String          @id @default(cuid())
+  patientId  String
+  patient    Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  questionId String
+  question   MedtechQuestion @relation(fields: [questionId], references: [id])
+  answer     String
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model MedtechImage {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  url       String   // Image URL or base64
+  type      String   // nail, eye, etc.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
