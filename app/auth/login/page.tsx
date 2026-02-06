@@ -27,12 +27,14 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      console.log("Attempting to sign in with email:", email);
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       })
 
+      console.log("Sign in result:", result);
       if (result?.error || !result?.ok) {
         setError("Invalid email or password")
       } else {
@@ -42,15 +44,18 @@ export default function LoginPage() {
         const userRole = session?.user?.role
         
         if (userRole === "admin") {
+          console.log("Redirecting to admin dashboard for user role:", userRole);
           router.push("/admin")
           router.refresh()
         } else {
           // doctors and users go to screening
+          console.log("Redirecting to screening for user role:", userRole);
           router.push("/screening")
           router.refresh()
         }
       }
-    } catch {
+    } catch (error) {
+      console.error("Error during sign in:", error);
       setError("Something went wrong. Please try again.")
     } finally {
       setLoading(false)
