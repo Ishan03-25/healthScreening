@@ -45,13 +45,11 @@ export default function LoginPage() {
         
         if (userRole === "admin") {
           console.log("Redirecting to admin dashboard for user role:", userRole);
-          router.push("/admin")
-          router.refresh()
+          window.location.href = "/admin"
         } else {
           // doctors and users go to screening
           console.log("Redirecting to screening for user role:", userRole);
-          router.push("/screening")
-          router.refresh()
+          window.location.href = "/screening"
         }
       }
     } catch (error) {
