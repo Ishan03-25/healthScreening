@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -92,7 +92,7 @@ function getInitialState(): {
   }
 }
 
-export default function ScreeningFlowPage() {
+function ScreeningFlowContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -320,5 +320,17 @@ export default function ScreeningFlowPage() {
         </motion.div>
       </AnimatePresence>
     </div>
+  )
+}
+
+export default function ScreeningFlowPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <ScreeningFlowContent />
+    </Suspense>
   )
 }
